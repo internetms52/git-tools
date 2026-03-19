@@ -23,24 +23,32 @@ while IFS= read -r HASH; do
     continue
   fi
 
-  # 方法一：regular merge，直接用 --is-ancestor 比對
-  if git merge-base --is-ancestor $REVERTED_HASH $CURRENT 2>/dev/null; then
-    echo "偵測到 $HASH 是針對本 branch 的 revert (regular merge)"
-    REVERTS_TO_UNDO+=("$HASH")
-    continue
-  fi
+  # 透過 parent 數量判斷是 regular merge 還是 squash merge
+  PARENT_COUNT=$(git log --pretty=%P -n 1 $REVERTED_HASH | tr ' ' '\n' | grep -c .)
 
-  # 方法二：squash merge，從被 revert 的 squash commit message 裡找 squash-source-sha
-  SOURCE_SHA=$(git show $REVERTED_HASH --format="%B" | grep "squash-source-sha:" | awk '{print $2}')
+  if [ "$PARENT_COUNT" -gt 1 ]; then
+    # 方法一：regular merge，檢查 merge commit 的 feature branch parent 是否為 CURRENT 的祖先
+    FEATURE_PARENTS=$(git log --pretty=%P -n 1 $REVERTED_HASH | tr ' ' '\n' | tail -n +2)
+    for PARENT in $FEATURE_PARENTS; do
+      if git merge-base --is-ancestor $PARENT $CURRENT 2>/dev/null; then
+        echo "偵測到 $HASH 是針對本 branch 的 revert (regular merge)"
+        REVERTS_TO_UNDO+=("$HASH")
+        break
+      fi
+    done
+  else
+    # 方法二：squash merge，從被 revert 的 squash commit message 裡找 squash-source-sha
+    SOURCE_SHA=$(git show $REVERTED_HASH --format="%B" | grep "squash-source-sha:" | awk '{print $2}')
 
-  if [ -z "$SOURCE_SHA" ]; then
-    continue
-  fi
+    if [ -z "$SOURCE_SHA" ]; then
+      continue
+    fi
 
-  # 確認 squash-source-sha 是否在當前 branch 的祖先鏈上
-  if git merge-base --is-ancestor $SOURCE_SHA $CURRENT 2>/dev/null; then
-    echo "偵測到 $HASH 是針對本 branch 的 revert (squash merge)"
-    REVERTS_TO_UNDO+=("$HASH")
+    # 確認 squash-source-sha 是否在當前 branch 的祖先鏈上
+    if git merge-base --is-ancestor $SOURCE_SHA $CURRENT 2>/dev/null; then
+      echo "偵測到 $HASH 是針對本 branch 的 revert (squash merge)"
+      REVERTS_TO_UNDO+=("$HASH")
+    fi
   fi
 
 done < <(git log $UPSTREAM ^$BASE --format="%H")

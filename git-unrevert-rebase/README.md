@@ -22,7 +22,7 @@ Before rebasing, `git-unrevert-rebase` scans the upstream branch for any revert 
 
 ## Limitations
 
-- Only works with regular merges. Squash merges break the ancestor chain, so revert commits targeting squash-merged branches cannot be detected.
+- Squash merge detection requires the squash commit message to contain a `squash-source-sha: <hash>` line pointing back to the original feature branch commit. Without this, squash-merged branches cannot be detected.
 
 ## Installation
 
