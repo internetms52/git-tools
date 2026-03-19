@@ -4,73 +4,73 @@ UPSTREAM=${1:-main}
 CURRENT=$(git rev-parse --abbrev-ref HEAD)
 
 if [ "$CURRENT" = "$UPSTREAM" ]; then
-  echo "目前已在 $UPSTREAM，不需要 rebase"
+  echo "Already on $UPSTREAM, no rebase needed"
   exit 1
 fi
 
-# 找出 feature branch 跟 upstream 的分叉點
+# Find the divergence point between the feature branch and upstream
 BASE=$(git merge-base $UPSTREAM $CURRENT)
 
-# 收集需要 revert 的 revert commits
+# Collect revert commits that need to be undone
 REVERTS_TO_UNDO=()
 
-# 掃描分叉點之後，upstream 上所有的 revert commit
+# Scan all revert commits on upstream after the divergence point
 while IFS= read -r HASH; do
-  # 抓出這個 revert commit 指向的原始 hash
+  # Extract the original hash that this revert commit points to
   REVERTED_HASH=$(git show $HASH --format="%B" | grep "This reverts commit" | awk '{print $4}' | tr -d '.')
 
   if [ -z "$REVERTED_HASH" ]; then
     continue
   fi
 
-  # 透過 parent 數量判斷是 regular merge 還是 squash merge
+  # Determine whether it was a regular merge or squash merge by checking parent count
   PARENT_COUNT=$(git log --pretty=%P -n 1 $REVERTED_HASH | tr ' ' '\n' | grep -c .)
 
   if [ "$PARENT_COUNT" -gt 1 ]; then
-    # 方法一：regular merge，檢查 merge commit 的 feature branch parent 是否為 CURRENT 的祖先
+    # Method 1: regular merge — check if any non-first parent of the merge commit is an ancestor of CURRENT
     FEATURE_PARENTS=$(git log --pretty=%P -n 1 $REVERTED_HASH | tr ' ' '\n' | tail -n +2)
     for PARENT in $FEATURE_PARENTS; do
       if git merge-base --is-ancestor $PARENT $CURRENT 2>/dev/null; then
-        echo "偵測到 $HASH 是針對本 branch 的 revert (regular merge)"
+        echo "Detected $HASH as a revert targeting this branch (regular merge)"
         REVERTS_TO_UNDO+=("$HASH")
         break
       fi
     done
   else
-    # 方法二：squash merge，從被 revert 的 squash commit message 裡找 squash-source-sha
+    # Method 2: squash merge — look for squash-source-sha in the reverted commit message
     SOURCE_SHA=$(git show $REVERTED_HASH --format="%B" | grep "squash-source-sha:" | awk '{print $2}')
 
     if [ -z "$SOURCE_SHA" ]; then
       continue
     fi
 
-    # 確認 squash-source-sha 是否在當前 branch 的祖先鏈上
+    # Check if squash-source-sha is an ancestor of the current branch
     if git merge-base --is-ancestor $SOURCE_SHA $CURRENT 2>/dev/null; then
-      echo "偵測到 $HASH 是針對本 branch 的 revert (squash merge)"
+      echo "Detected $HASH as a revert targeting this branch (squash merge)"
       REVERTS_TO_UNDO+=("$HASH")
     fi
   fi
 
 done < <(git log $UPSTREAM ^$BASE --format="%H")
 
-# 先執行 rebase
-echo "開始 rebase onto $UPSTREAM..."
+# Rebase first
+echo "Starting rebase onto $UPSTREAM..."
 git rebase $UPSTREAM
 
 if [ $? -ne 0 ]; then
-  echo "錯誤: rebase 失敗"
+  echo "Error: rebase failed"
   exit 1
 fi
 
-# rebase 完成後，revert 那些針對本 branch 的 revert commits
+# After rebase, revert the upstream revert commits that targeted this branch
 for REVERT_HASH in "${REVERTS_TO_UNDO[@]}"; do
-  echo "Revert 來自 upstream 的 revert commit: $REVERT_HASH"
+  echo "Reverting upstream revert commit: $REVERT_HASH"
   git revert $REVERT_HASH
 
   if [ $? -ne 0 ]; then
-    echo "錯誤: 無法 revert $REVERT_HASH，請手動處理"
+    echo "Error: could not revert $REVERT_HASH, please resolve manually"
     exit 1
   fi
 done
 
-echo "完成！"
+echo "Done!"

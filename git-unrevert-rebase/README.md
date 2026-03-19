@@ -49,7 +49,7 @@ source ~/.bashrc
 ## Usage
 
 ```bash
-git unrevert-rebase main
+git-unrevert-rebase main
 ```
 
 ## License
