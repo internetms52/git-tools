@@ -27,10 +27,10 @@ Before rebasing, `git-unrevert-rebase` scans the upstream branch for any revert 
 ## Installation
 
 ```bash
-mkdir -p ~/.unrevert-rebase/bin && \
-curl -o ~/.unrevert-rebase/bin/git-unrevert-rebase https://raw.githubusercontent.com/internetms52/git-unrevert-rebase/main/git-unrevert-rebase && \
-chmod +x ~/.unrevert-rebase/bin/git-unrevert-rebase && \
-echo 'export PATH="$HOME/.unrevert-rebase/bin:$PATH"' >> ~/.zshrc && \
+mkdir -p ~/.git-tools/bin && \
+curl -o ~/.git-tools/bin/git-unrevert-rebase https://raw.githubusercontent.com/internetms52/git-tools/main/git-unrevert-rebase/git-unrevert-rebase && \
+chmod +x ~/.git-tools/bin/git-unrevert-rebase && \
+echo 'export PATH="$HOME/.git-tools/bin:$PATH"' >> ~/.zshrc && \
 source ~/.zshrc
 ```
 
