@@ -65,7 +65,7 @@ fi
 # rebase 完成後，revert 那些針對本 branch 的 revert commits
 for REVERT_HASH in "${REVERTS_TO_UNDO[@]}"; do
   echo "Revert 來自 upstream 的 revert commit: $REVERT_HASH"
-  git revert $REVERT_HASH --no-edit
+  git revert $REVERT_HASH
 
   if [ $? -ne 0 ]; then
     echo "錯誤: 無法 revert $REVERT_HASH，請手動處理"
