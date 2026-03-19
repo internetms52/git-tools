@@ -21,3 +21,4 @@ For tools that use the shared install path `~/.git-tools/bin`, add this to your 
 ```bash
 echo 'export PATH="$HOME/.git-tools/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 ```
+bad
