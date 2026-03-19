@@ -9,7 +9,7 @@ A collection of Git helper tools.
 Rebase helper that detects and undoes revert commits targeting your branch, preventing silent commit loss during rebase.
 
 ```bash
-git unrevert-rebase main
+git-unrevert-rebase main
 ```
 
 ## Installation
