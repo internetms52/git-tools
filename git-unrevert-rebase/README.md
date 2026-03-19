@@ -26,6 +26,8 @@ Before rebasing, `git-unrevert-rebase` scans the upstream branch for any revert 
 
 ## Installation
 
+**macOS / Linux**
+
 ```bash
 mkdir -p ~/.git-tools/bin && \
 curl -o ~/.git-tools/bin/git-unrevert-rebase https://raw.githubusercontent.com/internetms52/git-tools/main/git-unrevert-rebase/git-unrevert-rebase && \
@@ -34,7 +36,15 @@ echo 'export PATH="$HOME/.git-tools/bin:$PATH"' >> ~/.zshrc && \
 source ~/.zshrc
 ```
 
-Works on macOS, Linux, and Windows (via Git Bash).
+**Windows (Git Bash)**
+
+```bash
+mkdir -p ~/.git-tools/bin && \
+curl -o ~/.git-tools/bin/git-unrevert-rebase https://raw.githubusercontent.com/internetms52/git-tools/main/git-unrevert-rebase/git-unrevert-rebase && \
+chmod +x ~/.git-tools/bin/git-unrevert-rebase && \
+echo 'export PATH="$HOME/.git-tools/bin:$PATH"' >> ~/.bashrc && \
+source ~/.bashrc
+```
 
 ## Usage
 
